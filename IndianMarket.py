@@ -3,6 +3,10 @@ import pandas as pd
 import streamlit as st
 import pymysql
 import time
+import plotly.graph_objects as go
+import plotly.express as px
+
+
 
 # Create a connection to the MySQL database
 host = "localhost"
@@ -100,13 +104,222 @@ def Indian_Indices():
         df['Day_Change'] = df['Day_Change'].apply(lambda x: '-{:,.2f}'.format(abs(x)) if x < 0 else '{:,.2f}'.format(x))
         df['Change_Prct'] = df['Change_Prct'].apply(lambda x: '-{:,.2f}'.format(abs(x)) if x < 0 else '{:,.2f}'.format(x))
 
-        #print(df.columns)
-
         # Display the DataFrame with column names
         st.write(df)
 
-        # Close the cursor and connection
+        # display a horizontal separator line
+        st.markdown('---')
 
+        # get the total number of rows
+        num_rows = df.shape[0]
+        st.subheader(f'The dataset contains {num_rows} rows.')
+
+        # display a horizontal separator line
+        st.markdown('---')
+
+        query = 'SELECT Date, Day_Change FROM nifty_50 ORDER BY Date ASC'
+        cursor.execute(query)
+
+        # Fetch the data returned by the SQL query using the curser
+        datadc = cursor.fetchall()
+
+        # Create a Dataframe from the data
+        dfdc = pd.DataFrame(list(datadc),columns=[desc[0] for desc in cursor.description])
+
+         # Format negative values
+        dfdc['Day_Change'] = dfdc['Day_Change'].apply(lambda x: '-{:,.2f}'.format(abs(x)) if x < 0 else '{:,.2f}'.format(x))
+
+        # Display the DataFrame with column names
+        st.write(dfdc)
+
+
+        # Define your data
+        x = df['Date']
+        y = df['Day_Change']
+
+        # Define a color scale
+        color_scale = [
+    [0, 'rgb(255, 0, 0)'],   # Red
+    #[0.5, 'rgb(255, 255, 0)'],   # Yellow
+    [1, 'rgb(0, 255, 0)']   # Green
+]
+
+        # Set the color scale domain to span the full range of y values
+        color_scale_domain = [min(y), max(y)]
+
+        # Create a trace with color based on value
+        trace = go.Bar(x=x, y=y, marker=dict(color=y, colorscale=color_scale, cmin=color_scale_domain[0], cmax=color_scale_domain[1]))
+
+        # Create a layout
+        layout = go.Layout(
+    title='Nifty Value Changes Overview',
+    xaxis=dict(title="Date"),
+    yaxis=dict(title="Value Change")
+)
+
+        # Create a figure and add the trace and layout
+        fig = go.Figure(data=[trace], layout=layout)
+
+        # Display the chart using plotly
+        fig.show()
+
+
+        # Create a candlestick chart with the Open, High, Low, and Close prices
+        fig = go.Figure(data=[go.Candlestick(x=df['Date'],
+                                     open=df['Open'],
+                                     high=df['High'],
+                                     low=df['Low'],
+                                     close=df['Close'],
+                                     increasing_line_color='royalblue',
+                                     decreasing_line_color='red')])
+
+        # Add title and axis labels
+        fig.update_layout(title='Nifty 50 Candlestick Chart',
+                  xaxis_title='Date',
+                  yaxis_title='Price')
+
+        # Add a line chart with the Open prices
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['Open'],
+                         mode='lines', line=dict(color='royalblue'),
+                         name='Open'))
+
+        # Add a line chart with the High prices
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['High'],
+                         mode='lines', line=dict(color='green'),
+                         name='High'))
+
+        #  Add a line chart with the Low prices
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['Low'],
+                         mode='lines', line=dict(color='red'),
+                         name='Low'))
+
+        # Add a line chart with the Close prices
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['Close'],
+                         mode='lines', line=dict(color='gold'),
+                         name='Close'))
+
+        # Display the chart in Streamlit
+        st.plotly_chart(fig)
+
+
+        # Create a candlestick chart with the Open, High, Low, and Close prices
+        fig = go.Figure(data=[go.Candlestick(x=df['Date'],
+                                     open=df['Open'],
+                                     high=df['High'],
+                                     low=df['Low'],
+                                     close=df['Close'],
+                                     increasing_line_color='royalblue',
+                                     decreasing_line_color='red')])
+
+        # Add title and axis labels
+        fig.update_layout(title='Nifty 50 Candlestick Chart',
+                  xaxis_title='Date',
+                  yaxis_title='Close Price')
+
+        
+        # Add a line chart with the Close prices
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['Close'],
+                         mode='lines', line=dict(color='gold'),
+                         name='Close'))
+
+        # Display the chart in Streamlit
+        st.plotly_chart(fig)
+
+
+        # Create a candlestick chart with the Open, High, Low, and Close prices
+        fig = go.Figure(data=[go.Candlestick(x=df['Date'],
+                                     close=df['Close'],
+                                     increasing_line_color='royalblue',
+                                     decreasing_line_color='red')])
+
+        # Add title and axis labels
+        fig.update_layout(title='Nifty 50 Closing Chart',
+                  xaxis_title='Date',
+                  yaxis_title='Close Price')
+
+        
+        # Add a line chart with the Close prices
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['Close'],
+                         mode='lines', line=dict(color='royalblue'),
+                         name='Close'))
+
+        # Display the chart in Streamlit
+        st.plotly_chart(fig)
+
+        # display a horizontal separator line
+        st.markdown('---')
+
+        fig = go.Figure(data=[go.Candlestick(x=df['Date'],
+                                     close=df['Close'],
+                                     increasing_line_color='royalblue',
+                                     decreasing_line_color='red')])
+
+        fig.update_layout(title='Nifty 50 Closing Chart',
+                  xaxis_title='Date',
+                  yaxis_title='Close Price',
+                  xaxis_rangeslider_visible=True)
+
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['Close'],
+                         mode='lines', line=dict(color='royalblue'),
+                         name='Close'))
+
+        st.plotly_chart(fig)
+        # display a horizontal separator line
+        st.markdown('---')
+
+        fig = go.Figure(data=[go.Candlestick(x=df['Date'],
+                                     close=df['Close'],
+                                     increasing_line_color='royalblue',
+                                     decreasing_line_color='red')])
+
+        fig.update_layout(title='Nifty 50 Closing Chart',
+                  xaxis_title='Date',
+                  yaxis_title='Close Price')
+
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['Close'],
+                         mode='lines', line=dict(color='royalblue'),
+                         name='Close'))
+
+        # Find the highest and lowest value of Close
+        max_close = df['Close'].max()
+        min_close = df['Close'].min()
+
+        # Add annotations for the highest and lowest value of Close
+        fig.add_annotation(x=df.loc[df['Close'] == max_close, 'Date'].iloc[0],
+                   y=max_close,
+                   text=f"Highest Close: {max_close:.2f}",
+                   showarrow=True,
+                   arrowhead=1,
+                   ax=-50,
+                   ay=-50)
+        fig.add_annotation(x=df.loc[df['Close'] == min_close, 'Date'].iloc[0],
+                   y=min_close,
+                   text=f"Lowest Close: {min_close:.2f}",
+                   showarrow=True,
+                   arrowhead=1,
+                   ax=50,
+                   ay=50)
+
+        st.plotly_chart(fig)
+
+        # Compute the difference between the high and low columns
+        diff = df['High'] - df['Low']
+
+        # Add the difference column to the DataFrame
+        df['Diff'] = diff
+
+        # Create a bar chart of the differences
+        fig = go.Figure(data=[go.Bar(x=df['Date'], y=df['Diff'], marker_color='royalblue')])
+
+        fig.update_layout(title='Difference between Day High and Day Low',
+                  xaxis_title='Date',
+                  yaxis_title='Difference')
+
+        st.plotly_chart(fig)
+
+
+
+        # Close the cursor and connection
         cursor.close()
         mydb.close()
 
@@ -237,7 +450,7 @@ def Indian_Indices():
         st.title("View Sensex Data")
         # Retrive nifty50 data from the database
         # Example query - select all rows from a table
-        query = 'SELECT Sensex_id, Date, Day, Open, High, Low, Close, Day_Change, Change_Prct FROM sensex'
+        query = 'SELECT Sensex_id, Date, Day, Open, High, Low, Close, Day_Change, Change_Prct FROM sensex order by Sensex_id asc,Date '
         cursor.execute(query)
 
         # Fetch the data returned by the SQL query using the curser
